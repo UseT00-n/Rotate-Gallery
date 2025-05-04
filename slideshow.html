@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>3D Cube Slideshow with Zoom</title>
+  <style>
+    body {
+      perspective: 1000px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #111;
+      overflow-x: hidden;
+      margin: 0;
+      padding: 20px;
+      height: 100vh;
+      box-sizing: border-box;
+    }
+    .cube-container {
+      width: 300px;
+      height: 300px;
+      margin: 30px auto;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 1s ease;
+    }
+    .cube-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      border: 3px solid #fff;
+      box-shadow: 0 0 15px rgba(0,0,0,0.8);
+      cursor: pointer;
+      opacity: 1; /* No transparency */
+    }
+    /* Cube face positions */
+    .cube-face:nth-child(1) { transform: rotateY(0deg) translateZ(150px); }
+    .cube-face:nth-child(2) { transform: rotateY(90deg) translateZ(150px); }
+    .cube-face:nth-child(3) { transform: rotateY(180deg) translateZ(150px); }
+    .cube-face:nth-child(4) { transform: rotateY(270deg) translateZ(150px); }
+    .cube-face:nth-child(5) { transform: rotateX(90deg) translateZ(150px); }
+    .cube-face:nth-child(6) { transform: rotateX(-90deg) translateZ(150px); }
+    
+    .controls {
+      margin: 20px;
+      display: flex;
+      gap: 20px;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 18px;
+      cursor: pointer;
+      background: #444;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      transition: all 0.3s;
+    }
+    button:hover {
+      background: #666;
+    }
+    #fileInput {
+      display: none;
+    }
+    .upload-btn {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+    .upload-btn:hover {
+      background: #45a049;
+    }
+    
+    /* Zoom overlay */
+    .zoom-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s;
+    }
+    .zoom-image {
+      max-width: 90%;
+      max-height: 90%;
+      transform: scale(0.8);
+      transition: transform 0.3s;
+      border: 3px solid white;
+      box-shadow: 0 0 30px rgba(255,255,255,0.2);
+    }
+    .zoom-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .zoom-overlay.active .zoom-image {
+      transform: scale(1);
+    }
+    .close-zoom {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      color: white;
+      font-size: 30px;
+      cursor: pointer;
+      background: rgba(0,0,0,0.5);
+      width: 40px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+
+<label for="fileInput" class="upload-btn">Upload Images (4-6)</label>
+<input type="file" id="fileInput" multiple accept="image/*">
+
+<div class="cube-container" id="cube">
+  <!-- Cube faces will be added here -->
+</div>
+
+<div class="controls">
+  <button id="prevBtn">← Previous</button>
+  <button id="nextBtn">Next →</button>
+</div>
+
+<!-- Zoom overlay -->
+<div class="zoom-overlay" id="zoomOverlay">
+  <span class="close-zoom">&times;</span>
+  <img class="zoom-image" id="zoomImage">
+</div>
+
+<script>
+  const cube = document.getElementById('cube');
+  const fileInput = document.getElementById('fileInput');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const zoomOverlay = document.getElementById('zoomOverlay');
+  const zoomImage = document.getElementById('zoomImage');
+  const closeZoom = document.querySelector('.close-zoom');
+  
+  let currentAngle = 0;
+  let images = [];
+  let autoRotateInterval;
+
+  // Handle image upload
+  fileInput.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files).slice(0, 6); // Max 6 images for cube
+    if (files.length < 4) {
+      alert("Please upload at least 4 images for best effect");
+      return;
+    }
+    
+    // Clear previous cube
+    cube.innerHTML = '';
+    images = [];
+    
+    // Stop auto-rotation
+    clearInterval(autoRotateInterval);
+    
+    // Create cube faces
+    files.forEach((file, index) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const face = document.createElement('div');
+        face.className = 'cube-face';
+        face.style.backgroundImage = `url(${event.target.result})`;
+        
+        // Add click event for zoom
+        face.addEventListener('click', () => {
+          zoomImage.src = event.target.result;
+          zoomOverlay.classList.add('active');
+        });
+        
+        cube.appendChild(face);
+        images.push(face);
+        
+        // Start rotation when we have at least 4 images
+        if (index >= 3 && !autoRotateInterval) {
+          startAutoRotation();
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  // Rotation functions
+  function rotateCube(angle) {
+    currentAngle = angle;
+    cube.style.transform = `rotateY(${currentAngle}deg)`;
+  }
+  
+  function nextFace() {
+    currentAngle -= 90;
+    rotateCube(currentAngle);
+  }
+  
+  function prevFace() {
+    currentAngle += 90;
+    rotateCube(currentAngle);
+  }
+  
+  function startAutoRotation() {
+    autoRotateInterval = setInterval(nextFace, 3000);
+  }
+
+  // Button controls
+  nextBtn.addEventListener('click', () => {
+    clearInterval(autoRotateInterval);
+    nextFace();
+    startAutoRotation();
+  });
+  
+  prevBtn.addEventListener('click', () => {
+    clearInterval(autoRotateInterval);
+    prevFace();
+    startAutoRotation();
+  });
+  
+  // Keyboard controls
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      clearInterval(autoRotateInterval);
+      nextFace();
+      startAutoRotation();
+    }
+    if (e.key === 'ArrowLeft') {
+      clearInterval(autoRotateInterval);
+      prevFace();
+      startAutoRotation();
+    }
+    if (e.key === 'Escape') {
+      zoomOverlay.classList.remove('active');
+    }
+  });
+
+  // Close zoom overlay
+  closeZoom.addEventListener('click', () => {
+    zoomOverlay.classList.remove('active');
+  });
+  
+  // Close when clicking outside image
+  zoomOverlay.addEventListener('click', (e) => {
+    if (e.target === zoomOverlay) {
+      zoomOverlay.classList.remove('active');
+    }
+  });
+</script>
+
+</body>
+</html>
