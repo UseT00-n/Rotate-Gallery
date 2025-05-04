@@ -1,0 +1,15 @@
+# Ignore OS/system files
+.DS_Store
+Thumbs.db
+
+# Ignore Node.js/npm files
+node_modules/
+npm-debug.log
+
+# Ignore IDE files
+.vscode/
+.idea/
+
+# Ignore environment files
+.env
+*.tmp
