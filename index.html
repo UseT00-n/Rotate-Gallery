@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .slideshow {
+      width: 600px;
+      height: 400px;
+      position: relative;
+      margin: auto;
+      overflow: hidden;
+    }
+    .slide {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+    .slide.active {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+<div class="slideshow">
+  <!-- Replace with your image URLs -->
+  <img class="slide active" src="https://example.com/image1.jpg">
+  <img class="slide" src="https://example.com/image2.jpg">
+  <img class="slide" src="https://example.com/image3.jpg">
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let currentSlide = 0;
+
+  function nextSlide() {
+    slides[currentSlide].classList.remove('active');
+    currentSlide = (currentSlide + 1) % slides.length;
+    slides[currentSlide].classList.add('active');
+  }
+
+  // Change slide every 3 seconds
+  setInterval(nextSlide, 3000);
+</script>
+
+</body>
+</html>
