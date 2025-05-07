@@ -13,3 +13,6 @@ npm-debug.log
 # Ignore environment files
 .env
 *.tmp
+
+# Ignore preview files
+preview.html
