@@ -1,14 +1,4 @@
-// Wait for full load
-window.addEventListener('load', () => {
-  document.getElementById('loader').style.display = 'none';
-});
 
-// Cube functionality
-const cube = document.getElementById('cube');
-let currentAngle = 0;
-
-// [Previous JS code for cube rotation/upload/clear...]
-// Let me know if you need this part expanded!
 
 // Cube faces
 let images = [];
@@ -59,3 +49,15 @@ document.getElementById('clearBtn').addEventListener('click', () => {
 
 // Start the gallery
 initGallery();
+
+// Wait for full load
+window.addEventListener('load', () => {
+  document.getElementById('loader').style.display = 'none';
+});
+
+// Cube functionality
+const cube = document.getElementById('cube');
+let currentAngle = 0;
+
+// [Previous JS code for cube rotation/upload/clear...]
+// Let me know if you need this part expanded!
